@@ -23,7 +23,7 @@ class YoloHead(nn.Module):
 #   yolo
 #---------------------------------------------------#
 class Yolo(nn.Module):
-    def __init__(self, num_classes, num_anchors=3):
+    def __init__(self, num_classes=80, num_anchors=3):
         super().__init__()
         # backbone
         self.backbone = CSPDarkNet()

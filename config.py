@@ -3,34 +3,39 @@ import warnings
 class Config(object):
 
     # dataset path
-    root_path = '/home/dejiang/datasets/'
+    datasets_path = '/home/data/datasets/coco2017/coco'
+    class_names_path = './cfg/coco.txt'
+    anchors_path = './cfg/anchors.txt'
 
-    # dataset, pretrain
+    # pretrain
     save_folder = 'weights/'
     pretrain_model = save_folder + 'yolov4-tiny.pth'
     
     # net
+    input_shape = (416, 416)
     max_epoch = 100
-    batch_size = 32
-    cpu_count = 8
+    batch_size = 64
+    cpu_count = 16
     lr = 1e-3
-    betas = (0.9, 0.999)
-    eps = 1e-8
-    weight_decay = 0    # 5e-4
-    momentum = 0.9
+    T_max = 5
+    eta_min = 1e-5
+    step_size = 1
+    gamma = 0.92
 
     # train
     use_gpu = True
     load_part_weight = False
+    loss_normalize = False
+    use_cosine_lr = False
+    smooth_label = 0
     # valid
     threshold = 0.5
     
     # other
     debug = '/tmp/debug'
+    log_path = './log'
     every_save = 1
     every_valid = 1
-    num_vaild = 100
-    every_log = 1
 
 
     def parse(self, **kwargs):

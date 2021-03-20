@@ -1,3 +1,4 @@
+from matplotlib.pyplot import box
 import numpy as np
 import cv2
 import torch
@@ -11,6 +12,7 @@ def get_class_names(class_names_path='./cfg/coco.txt'):
 
 def get_anchors(anchors_path='./cfg/anchors.txt'):
     with open(anchors_path, 'r') as f:
+        # (-1->2个输出层的anchors, 每个输出层的每个单元格有3个anchor, 每个anchor的尺寸)
         return np.array(list(map(int, f.readline().split(',')))).reshape(-1, 3, 2)
     
 
@@ -286,6 +288,58 @@ def letter_correct_boxes(left, top, right, bottom, input_shape, image_shape):
     boxes *= np.concatenate([image_shape[::-1], image_shape[::-1]],axis=-1)
     return boxes
 
+def get_box_from_out(out, image_shape=np.array([416, 416]), model_image_size = (416, 416, 3), confidence=0.5, iou=0.3, class_names_path='./cfg/coco.txt', anchors_path='./cfg/anchors.txt', is_letterbox_image=False):
+    class_names = get_class_names(class_names_path)
+    anchors = get_anchors(anchors_path)
+    anchors_mask = [[3,4,5], [1,2,3]]   # 13x13检测的目标更大，对应的anchor更大。26x26反之。
+    yolo_decodes = []
+    for i in range(2):
+        yolo_decodes.append(
+            DecodeBox(
+                anchors.reshape(-1,2)[anchors_mask[i]], 
+                len(class_names), 
+                (model_image_size[1], model_image_size[0])
+            )
+        )
+    # 解码anchor
+    out_list = []
+    for i in range(2):
+        out_list.append(yolo_decodes[i](out[i]))
+
+    # 堆叠预测框，nms
+    out = torch.cat(out_list, 1)
+    batch_detections = non_max_suppression(out, 
+                                            len(class_names),
+                                            conf_thres=confidence,
+                                            nms_thres=iou
+    )
+    batch_boxes = []
+    for detections in batch_detections:
+        # 去除letterbox_image添加灰边造成的box偏移
+        try:
+            boxes = detections.cpu().numpy()
+        except:
+            continue
+        x1, y1, x2, y2 = np.expand_dims(boxes[:,0],-1), np.expand_dims(boxes[:,1],-1), np.expand_dims(boxes[:,2],-1), np.expand_dims(boxes[:,3],-1) # xmin, ymin, xmax, ymax
+        class_conf, classes = np.expand_dims(boxes[:,5], -1), np.expand_dims(boxes[:,6], -1)
+        if is_letterbox_image:
+            boxes = letter_correct_boxes(x1, y1, x2, y2, np.array([model_image_size[0], model_image_size[1]]), image_shape)
+        else:
+            x1 = x1 / model_image_size[1] # * image_shape[1]
+            y1 = y1 / model_image_size[0] # * image_shape[0]
+            x2 = x2 / model_image_size[1] # * image_shape[1]
+            y2 = y2 / model_image_size[0] # * image_shape[0]
+            # boxes = np.concatenate([x1, y1, x2, y2], axis=-1)
+            # (x1, y1, x2, y2) -> (cx, cy, w, h)
+            cx = x1 + (x2-x1)/2
+            cy = y1 + (y2-y1)/2
+            w = x2 - x1
+            h = y2 - y1
+            boxes = np.concatenate([cx, cy, w, h], axis=-1)
+        boxes = np.concatenate([boxes, class_conf, classes], axis=-1)
+        batch_boxes.append(boxes)
+    return batch_boxes
+
 def draw_one_box(img, b, color=None, label=None, line_thickness=None):
     # Plots one bounding box on image img
     tl = line_thickness or round(0.002 * (img.shape[0] + img.shape[1]) / 2) + 1  # line/font thickness
@@ -304,5 +358,33 @@ def draw_multi_box(img, boxes, class_names=None, colors=None, line_thickness=Non
     for box in boxes:
         idx = int(box[-1])
         b = box[:4]
-        draw_one_box(img, b, color=colors[idx] if colors else [44, 44, 255], label=class_names[idx] if class_names else '')
+        draw_one_box(img, b, color=colors[idx] if colors else [44, 44, 255], label=class_names[idx] if class_names else '', line_thickness=line_thickness)
     return img
+
+def convert_cxcywh_to_x1y1x2y2(boxes, img_shape=None, is_predict=True):
+    if is_predict:  # (cx, cy, w, h, conf, classes)
+        pass
+    else:   # (classes, cx, cy, w, h)
+        boxes = boxes[:, [1,2,3,4,0]]
+    boxes[:, 0] -= boxes[:, 2] / 2
+    boxes[:, 1] -= boxes[:, 3] / 2
+    boxes[:, 2] += boxes[:, 0]
+    boxes[:, 3] += boxes[:, 1]
+    if img_shape:
+        h, w, _ = img_shape
+        boxes[:, [0, 2]] *= w
+        boxes[:, [1, 3]] *= h
+        boxes = boxes.astype(int)
+    return boxes
+
+def convert_x1y1x2y2_to_cxcywh(boxes, img_shape=None):
+    boxes[:, 2] -= boxes[:, 0]
+    boxes[:, 3] -= boxes[:, 1]
+    boxes[:, 0] += boxes[:, 2] / 2
+    boxes[:, 1] += boxes[:, 3] / 2
+    if img_shape:
+        h, w, _ = img_shape
+        boxes[:, [0, 2]] *= w
+        boxes[:, [1, 3]] *= h
+        boxes = boxes.astype(int)
+    return boxes

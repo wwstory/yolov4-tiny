@@ -1,3 +1,7 @@
+# %%
+import os
+os.chdir('..')
+print(os.path.abspath('.'))
 # 1.模型
 # %%
 from model.CSPdarknet53_tiny import CSPDarkNet
@@ -5,8 +9,12 @@ csp = CSPDarkNet()
 
 # 2.模型参数迁移
 # %%
+import torch
 from model.yolov4_tiny import Yolo
 yolo = Yolo(80, 3)
+img = torch.rand(32, 3, 416, 416)
+out = yolo(img)
+print(out[0].shape, out[1].shape)
 
 # %%
 key0 = [

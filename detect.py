@@ -6,9 +6,10 @@ import cv2
 from model import Yolo
 from utils import get_class_names, get_anchors, DecodeBox, letterbox_image, non_max_suppression, letter_correct_boxes
 
+
 class Detect:
 
-    def __init__(self, weights_path='./weights/yolov4_tiny-coco.pth', num_classes=80, confidence=0.5, iou=0.3, class_names_path='./cfg/coco.txt', anchors_path='./cfg/anchors.txt', is_letterbox_image=False):
+    def __init__(self, weights_path='./weights/yolov4-tiny.pth', confidence=0.5, iou=0.3, class_names_path='./cfg/coco.txt', anchors_path='./cfg/anchors.txt', is_letterbox_image=False):
         self.model_image_size = (416, 416, 3)
         self.confidence = confidence
         self.iou = iou
@@ -16,16 +17,23 @@ class Detect:
 
         self.image_shape = np.array([416, 416])
 
+        # 加载类别
+        self.class_names = get_class_names(class_names_path)
+
         # 加载模型
+        self.net = Yolo(num_classes=len(self.class_names))
+
         assert os.path.exists(weights_path), '训练模型不存在!'
-        self.net = Yolo(num_classes)
-        self.net.load_state_dict(torch.load(weights_path, map_location=lambda storage, loc: storage))
+        pth = torch.load(opt.pretrain_model, map_location=lambda storage, loc: storage)
+        if 'model' in pth:
+            record_epoch = pth['epoch']
+            pretrained_dict = pth['model']
+        else:
+            pretrained_dict = pth
+        self.net.load_state_dict(pretrained_dict)
         if torch.cuda.is_available():
             self.net.cuda()
         print('load net completed!')
-
-        # 加载类别
-        self.class_names = get_class_names(class_names_path)
 
         # 特征层解码(加上anchor)
         self.yolo_decodes = []
@@ -61,14 +69,13 @@ class Detect:
             # cv2.imwrite('/tmp/test2.jpg', img)
         else:
             img = cv2.resize(img, self.model_image_size[:2])
-        img = cv2.resize(img, self.model_image_size[:2])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = np.transpose(img, (2, 0, 1))
         img = img.astype(np.float32) / 255.
         img = torch.from_numpy(img)
         img.unsqueeze_(dim=0)
         return img
-    
+
     def _postprocess(self, out):
         # 解码anchor
         out_list = []
@@ -81,11 +88,14 @@ class Detect:
                                                 len(self.class_names),
                                                 conf_thres=self.confidence,
                                                 nms_thres=self.iou
-        )
+        )   # cx cy w h -> x1 y1 x2 y2
         detections = batch_detections[0]
 
         # 去除letterbox_image添加灰边造成的box偏移
-        boxes = detections.cpu().numpy()
+        try:
+            boxes = detections.cpu().numpy()
+        except:
+            return np.array([])
         x1, y1, x2, y2 = np.expand_dims(boxes[:,0],-1), np.expand_dims(boxes[:,1],-1), np.expand_dims(boxes[:,2],-1), np.expand_dims(boxes[:,3],-1) # xmin, ymin, xmax, ymax
         class_conf, classes = np.expand_dims(boxes[:,5], -1), np.expand_dims(boxes[:,6], -1)
         if self.is_letterbox_image:
@@ -115,8 +125,9 @@ class Detect:
 if __name__ == '__main__':
     import cv2
     import numpy as np
+    from config import opt
     # detect = Detect(is_letterbox_image=True)
-    detect = Detect()
+    detect = Detect(class_names_path=opt.class_names_path, anchors_path=opt.anchors_path)
 
     img = cv2.imread('/tmp/test.jpg')
 
