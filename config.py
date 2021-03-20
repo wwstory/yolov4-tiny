@@ -14,7 +14,7 @@ class Config(object):
     # net
     input_shape = (416, 416)
     max_epoch = 100
-    batch_size = 64
+    batch_size = 32
     cpu_count = 16
     lr = 1e-3
     T_max = 5

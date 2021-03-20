@@ -1,4 +1,3 @@
-from matplotlib.pyplot import box
 import numpy as np
 import cv2
 import torch
@@ -318,25 +317,25 @@ def get_box_from_out(out, image_shape=np.array([416, 416]), model_image_size = (
         # 去除letterbox_image添加灰边造成的box偏移
         try:
             boxes = detections.cpu().numpy()
+            x1, y1, x2, y2 = np.expand_dims(boxes[:,0],-1), np.expand_dims(boxes[:,1],-1), np.expand_dims(boxes[:,2],-1), np.expand_dims(boxes[:,3],-1) # xmin, ymin, xmax, ymax
+            class_conf, classes = np.expand_dims(boxes[:,5], -1), np.expand_dims(boxes[:,6], -1)
+            if is_letterbox_image:
+                boxes = letter_correct_boxes(x1, y1, x2, y2, np.array([model_image_size[0], model_image_size[1]]), image_shape)
+            else:
+                x1 = x1 / model_image_size[1] # * image_shape[1]
+                y1 = y1 / model_image_size[0] # * image_shape[0]
+                x2 = x2 / model_image_size[1] # * image_shape[1]
+                y2 = y2 / model_image_size[0] # * image_shape[0]
+                # boxes = np.concatenate([x1, y1, x2, y2], axis=-1)
+                # (x1, y1, x2, y2) -> (cx, cy, w, h)
+                cx = x1 + (x2-x1)/2
+                cy = y1 + (y2-y1)/2
+                w = x2 - x1
+                h = y2 - y1
+                boxes = np.concatenate([cx, cy, w, h], axis=-1)
+            boxes = np.concatenate([boxes, class_conf, classes], axis=-1)
         except:
-            continue
-        x1, y1, x2, y2 = np.expand_dims(boxes[:,0],-1), np.expand_dims(boxes[:,1],-1), np.expand_dims(boxes[:,2],-1), np.expand_dims(boxes[:,3],-1) # xmin, ymin, xmax, ymax
-        class_conf, classes = np.expand_dims(boxes[:,5], -1), np.expand_dims(boxes[:,6], -1)
-        if is_letterbox_image:
-            boxes = letter_correct_boxes(x1, y1, x2, y2, np.array([model_image_size[0], model_image_size[1]]), image_shape)
-        else:
-            x1 = x1 / model_image_size[1] # * image_shape[1]
-            y1 = y1 / model_image_size[0] # * image_shape[0]
-            x2 = x2 / model_image_size[1] # * image_shape[1]
-            y2 = y2 / model_image_size[0] # * image_shape[0]
-            # boxes = np.concatenate([x1, y1, x2, y2], axis=-1)
-            # (x1, y1, x2, y2) -> (cx, cy, w, h)
-            cx = x1 + (x2-x1)/2
-            cy = y1 + (y2-y1)/2
-            w = x2 - x1
-            h = y2 - y1
-            boxes = np.concatenate([cx, cy, w, h], axis=-1)
-        boxes = np.concatenate([boxes, class_conf, classes], axis=-1)
+            boxes = np.array([])
         batch_boxes.append(boxes)
     return batch_boxes
 
@@ -362,6 +361,8 @@ def draw_multi_box(img, boxes, class_names=None, colors=None, line_thickness=Non
     return img
 
 def convert_cxcywh_to_x1y1x2y2(boxes, img_shape=None, is_predict=True):
+    if not boxes.size > 0:
+        return boxes
     if is_predict:  # (cx, cy, w, h, conf, classes)
         pass
     else:   # (classes, cx, cy, w, h)
@@ -378,6 +379,8 @@ def convert_cxcywh_to_x1y1x2y2(boxes, img_shape=None, is_predict=True):
     return boxes
 
 def convert_x1y1x2y2_to_cxcywh(boxes, img_shape=None):
+    if not boxes.size > 0:
+        return boxes
     boxes[:, 2] -= boxes[:, 0]
     boxes[:, 3] -= boxes[:, 1]
     boxes[:, 0] += boxes[:, 2] / 2

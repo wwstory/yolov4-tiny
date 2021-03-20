@@ -46,8 +46,9 @@ def train(**args):
     else:
         print("haven't weight!")
     if torch.cuda.is_available():
-        net.cuda()
+        net = torch.nn.DataParallel(net)
         cudnn.benchmark = True
+        net.cuda()
     net.train()
 
     # 3.损失函数、优化器、lr

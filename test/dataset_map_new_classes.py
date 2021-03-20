@@ -3,7 +3,7 @@ from tqdm import tqdm
 import shutil
 from collections import Counter
 
-dataset_type = 'train'  # val
+dataset_type = 'train'  # val   # train和val都需要切换运行一遍
 
 # images_path = f'/home/data/datasets/coco2017/coco/images/{dataset_type}2017/'
 labels_path = f'/home/data/datasets/coco2017/coco/labels/{dataset_type}2017/'   # 手动备份为新名称
@@ -108,7 +108,7 @@ print(f'标签：{counter_total}')
 print(f'交换：{counter_swap}')
 print(f'去除：{counter_x}')
 
-# 4.统计new类别
+# 3.统计new类别
 counter = Counter(new_classes)
 labels_name = os.listdir(out_labels_path)
 for label_name in tqdm(labels_name):

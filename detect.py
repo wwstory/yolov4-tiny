@@ -1,3 +1,5 @@
+# coding=utf-8
+# %%
 import torch
 import os
 import numpy as np
@@ -126,6 +128,7 @@ if __name__ == '__main__':
     import cv2
     import numpy as np
     from config import opt
+    import  matplotlib.pyplot as plt
     # detect = Detect(is_letterbox_image=True)
     # detect = Detect(class_names_path=opt.class_names_path, anchors_path=opt.anchors_path)
     detect = Detect(class_names_path='./cfg/swucar.txt', anchors_path=opt.anchors_path)
@@ -137,4 +140,6 @@ if __name__ == '__main__':
     print(boxes.shape)
 
     img = detect.draw_boxes(img, boxes)
+    plt.imshow(img[:,:,::-1])
+    plt.show()
     cv2.imwrite('/tmp/test_out.jpg', img)
