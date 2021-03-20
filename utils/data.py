@@ -1,3 +1,4 @@
+# %%
 import numpy as np
 from PIL import Image
 from torch.utils.data.dataset import Dataset
@@ -5,6 +6,7 @@ import cv2
 import os
 
 from utils.utils import convert_cxcywh_to_x1y1x2y2, convert_x1y1x2y2_to_cxcywh
+# from utils import convert_cxcywh_to_x1y1x2y2, convert_x1y1x2y2_to_cxcywh
 
 
 class YoloDataset(Dataset):
@@ -146,3 +148,31 @@ def yolo_dataset_collate(batch):
         bboxes.append(box)
     images = np.array(images)
     return images, bboxes
+
+
+if __name__ == '__main__':
+    import colorsys
+    from utils import draw_multi_box, get_class_names, convert_cxcywh_to_x1y1x2y2
+    import os
+    import cv2
+    import matplotlib.pyplot as plt
+    import numpy as np
+    # 设置画框颜色
+    class_names = get_class_names('../cfg/swucar.txt')
+    hsv_tuples = [(x / len(class_names), 1., 1.) for x in range(len(class_names))]
+    colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
+    colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
+    dataset = YoloDataset('/home/data/datasets/coco2017/coco', (416, 416), is_train=True)
+    
+    for i in range(10):
+        print('----->', i)
+        img, label = dataset[i]
+        print('out:', label)
+        img = np.transpose(img, (1, 2, 0))
+        boxes = label
+        boxes = convert_cxcywh_to_x1y1x2y2(boxes, img.shape)
+        img = draw_multi_box(img, boxes, class_names=class_names, colors=colors)
+
+        cv2.imwrite('/tmp/test_out.jpg', (img[:,:,::-1]*255.).astype(int))
+        plt.imshow(img)
+        plt.show()

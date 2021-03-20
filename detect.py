@@ -127,7 +127,8 @@ if __name__ == '__main__':
     import numpy as np
     from config import opt
     # detect = Detect(is_letterbox_image=True)
-    detect = Detect(class_names_path=opt.class_names_path, anchors_path=opt.anchors_path)
+    # detect = Detect(class_names_path=opt.class_names_path, anchors_path=opt.anchors_path)
+    detect = Detect(class_names_path='./cfg/swucar.txt', anchors_path=opt.anchors_path)
 
     img = cv2.imread('/tmp/test.jpg')
 

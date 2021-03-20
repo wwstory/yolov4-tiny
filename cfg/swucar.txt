@@ -1,0 +1,17 @@
+person
+bicycle
+car
+motorcycle
+airplane
+bus
+train
+truck
+boat
+light green
+light red
+light yellow
+pedestrian crossing
+parking area
+traffic sign
+cat
+dog

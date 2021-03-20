@@ -107,10 +107,10 @@ def train(**args):
             if epoch % opt.every_save == 0:
                 if not os.path.exists(opt.save_folder):
                     os.mkdir(opt.save_folder)
-                # torch.save({
-                #     'model' : net.state_dict(),
-                #     'epoch' : record_epoch,
-                # }, opt.pretrain_model)
+                torch.save({
+                    'model' : net.state_dict(),
+                    'epoch' : record_epoch,
+                }, opt.pretrain_model)
             if epoch % opt.every_valid == 0:
                 import time, pickle
                 prediction_list, labels_list, img_label_pred = valid(net)
@@ -165,4 +165,7 @@ if __name__ == '__main__':
             │   └── 0001.jpg
             └── val2017/
     '''
-    train()
+    train(
+        datasets_path = '/home/data/datasets/coco2017/coco',
+        class_names_path = './cfg/swucar.txt'
+    )
