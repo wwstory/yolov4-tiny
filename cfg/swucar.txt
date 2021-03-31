@@ -1,12 +1,12 @@
 person
-bicycle
 car
-motorcycle
-airplane
 bus
-train
 truck
-boat
+trailer
+bicycle
+motorcycle
+train
+airplane
 light green
 light red
 light yellow

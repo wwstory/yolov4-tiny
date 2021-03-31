@@ -391,3 +391,13 @@ def convert_x1y1x2y2_to_cxcywh(boxes, img_shape=None):
         boxes[:, [1, 3]] *= h
         boxes = boxes.astype(int)
     return boxes
+
+def boxes_classes_filter(boxes, need_list=None, filter_list=None, class_names_path='./cfg/coco.txt', index_classes=-1):
+    map_classes = dict(enumerate(get_class_names(class_names_path)))
+
+    if need_list is None and filter_list is None:
+        return boxes
+    if need_list:
+        return filter(lambda x: map_classes[int(x[index_classes])] in need_list, boxes)
+    elif filter_list:
+        return filter(lambda x: map_classes[int(x[index_classes])] not in filter_list, boxes)

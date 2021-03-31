@@ -26,7 +26,7 @@ class Detect:
         self.net = Yolo(num_classes=len(self.class_names))
 
         assert os.path.exists(weights_path), '训练模型不存在!'
-        pth = torch.load(opt.pretrain_model, map_location=lambda storage, loc: storage)
+        pth = torch.load(weights_path, map_location=lambda storage, loc: storage)
         if 'model' in pth:
             record_epoch = pth['epoch']
             pretrained_dict = pth['model']
@@ -67,7 +67,7 @@ class Detect:
         self.image_shape = np.array(img.shape[:2])
         if self.is_letterbox_image:
             # cv2.imwrite('/tmp/test1.jpg', img)
-            img = letterbox_image(img, (self.model_image_size[1],self.model_image_size[0]))
+            img = letterbox_image(img, (self.model_image_size[1], self.model_image_size[0]))
             # cv2.imwrite('/tmp/test2.jpg', img)
         else:
             img = cv2.resize(img, self.model_image_size[:2])
@@ -126,20 +126,23 @@ class Detect:
 
 if __name__ == '__main__':
     import cv2
-    import numpy as np
-    from config import opt
     import  matplotlib.pyplot as plt
     # detect = Detect(is_letterbox_image=True)
     # detect = Detect(class_names_path=opt.class_names_path, anchors_path=opt.anchors_path)
-    detect = Detect(class_names_path='./cfg/swucar.txt', anchors_path=opt.anchors_path)
+    detect = Detect(weights_path='./weights/yolov4-tiny.pth', 
+                    # class_names_path='./cfg/coco.txt', 
+                    class_names_path='./cfg/swucar.txt', 
+                    anchors_path='./cfg/anchors.txt',
+                    # is_letterbox_image=True
+    )
 
     img = cv2.imread('/tmp/test.jpg')
-
+    assert img is not None, 'image file not exist!'
     boxes = detect(img)
-    print(boxes)
-    print(boxes.shape)
 
     img = detect.draw_boxes(img, boxes)
     plt.imshow(img[:,:,::-1])
     plt.show()
-    cv2.imwrite('/tmp/test_out.jpg', img)
+    print(boxes)
+    print(boxes.shape)
+    cv2.imwrite(f'/tmp/test_out.jpg', img)

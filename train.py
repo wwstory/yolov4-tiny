@@ -2,7 +2,6 @@
 import torch
 from torch import optim
 from torch.utils.data import DataLoader
-from torch.backends import cudnn
 
 import os
 from tqdm import tqdm
@@ -46,8 +45,8 @@ def train(**args):
     else:
         print("haven't weight!")
     if torch.cuda.is_available():
-        net = torch.nn.DataParallel(net)
-        cudnn.benchmark = True
+        # net = torch.nn.DataParallel(net)
+        torch.backends.cudnn.benchmark = True
         net.cuda()
     net.train()
 
@@ -67,7 +66,7 @@ def train(**args):
         lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=opt.step_size, gamma=opt.gamma)
     
     # 4.数据集
-    train_dataset = YoloDataset(opt.datasets_path, (opt.input_shape[0], opt.input_shape[1]), is_train=True)
+    train_dataset = YoloDataset(opt.train_datasets_images_path, opt.train_datasets_labels_path, (opt.input_shape[0], opt.input_shape[1]), is_train=True)
     train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=opt.batch_size, num_workers=opt.cpu_count, pin_memory=True, drop_last=True, collate_fn=yolo_dataset_collate)
     
     # 5.训练
@@ -125,7 +124,7 @@ def train(**args):
 def valid(net):
     import numpy as np
     from utils import get_box_from_out
-    val_dataset = YoloDataset(opt.datasets_path, (opt.input_shape[0], opt.input_shape[1]), is_train=False)
+    val_dataset = YoloDataset(opt.valid_datasets_images_path, opt.valid_datasets_labels_path, (opt.input_shape[0], opt.input_shape[1]), is_train=False)
     val_dataloader = DataLoader(val_dataset, batch_size=opt.batch_size, num_workers=opt.cpu_count, pin_memory=True, drop_last=True, collate_fn=yolo_dataset_collate)
     
     prediction_list = []
@@ -154,19 +153,8 @@ def valid(net):
     return prediction_list, labels_list, img_label_pred
 
 if __name__ == '__main__':
-    '''
-        数据集按coco2017数据集形式存放
-        coco
-        ├── labels/
-        │   ├── train2017/
-        │   │   └── 0001.txt (classes cx cy w h)
-        │   └── val2017/
-        └── images/
-            ├── train2017/
-            │   └── 0001.jpg
-            └── val2017/
-    '''
     train(
-        datasets_path = '/home/data/datasets/coco2017/coco',
-        class_names_path = './cfg/swucar.txt'
+        # train_datasets_labels_path = '/home/data/datasets/coco2017/coco/labels/train2017',
+        # train_datasets_images_path = '/home/data/datasets/coco2017/coco/images/train2017',
+        # class_names_path = './cfg/coco.txt',
     )

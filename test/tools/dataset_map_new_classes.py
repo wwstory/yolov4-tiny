@@ -3,7 +3,7 @@ from tqdm import tqdm
 import shutil
 from collections import Counter
 
-dataset_type = 'train'  # val   # train和val都需要切换运行一遍
+dataset_type = 'train'  # 'train'/'val'   # train和val都需要切换运行一遍
 
 # images_path = f'/home/data/datasets/coco2017/coco/images/{dataset_type}2017/'
 labels_path = f'/home/data/datasets/coco2017/coco/labels/{dataset_type}2017/'   # 手动备份为新名称
@@ -16,23 +16,25 @@ if os.path.exists(out_dir):
 os.mkdir(out_dir)
 
 
-new_classes = ['person', 
-        'bicycle', 
-        'car', 
-        'motorcycle', 
-        'airplane', 
-        'bus', 
-        'train', 
-        'truck', 
-        'boat', 
-        'light green', 
-        'light red', 
-        'light yellow', 
-        'pedestrian crossing', 
-        'parking area', 
-        'traffic sign', 
-        'cat', 
-        'dog']
+new_classes = [
+    'person', 
+    'car', 
+    'bus', 
+    'truck', 
+    'trailer', 
+    'bicycle', 
+    'motorcycle', 
+    'train', 
+    'airplane', 
+    'light green', 
+    'light red', 
+    'light yellow', 
+    'pedestrian crossing', 
+    'parking area', 
+    'traffic sign', 
+    'cat', 
+    'dog'
+]
 
 old_classes = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light',
         'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow',

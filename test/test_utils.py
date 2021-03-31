@@ -1,7 +1,8 @@
 #!encoding:utf-8
 # %%
 import os
-os.chdir('..')
+if os.path.abspath('.').split('/')[-1] != 'yolov4-tiny':
+    os.chdir('..')
 print(os.path.abspath('.'))
 # %%
 from utils.utils import get_class_names, get_anchors
