@@ -1,4 +1,3 @@
-# coding=utf-8
 # %%
 import torch
 import os
@@ -6,12 +5,12 @@ import numpy as np
 import cv2
 
 from model import Yolo
-from utils import get_class_names, get_anchors, DecodeBox, letterbox_image, non_max_suppression, letter_correct_boxes
+from utils.utils import get_class_names, get_anchors, DecodeBox, letterbox_image, non_max_suppression, letter_correct_boxes
 
 
 class Detect:
 
-    def __init__(self, weights_path='./weights/yolov4-tiny.pth', confidence=0.5, iou=0.3, class_names_path='./cfg/coco.txt', anchors_path='./cfg/anchors.txt', is_letterbox_image=False):
+    def __init__(self, weights_path='./weights/yolov4-tiny.pt', confidence=0.5, iou=0.3, class_names_path='./cfg/coco.txt', anchors_path='./cfg/anchors.txt', is_letterbox_image=False):
         self.model_image_size = (416, 416, 3)
         self.confidence = confidence
         self.iou = iou
@@ -28,14 +27,14 @@ class Detect:
         assert os.path.exists(weights_path), '训练模型不存在!'
         pth = torch.load(weights_path, map_location=lambda storage, loc: storage)
         if 'model' in pth:
-            record_epoch = pth['epoch']
+            # record_epoch = pth['epoch']
             pretrained_dict = pth['model']
         else:
             pretrained_dict = pth
         self.net.load_state_dict(pretrained_dict)
         if torch.cuda.is_available():
             self.net.cuda()
-        print('load net completed!')
+        print('load model completed!')
 
         # 特征层解码(加上anchor)
         self.yolo_decodes = []
@@ -114,7 +113,7 @@ class Detect:
 
     def draw_boxes(self, img, boxes):
         import colorsys
-        from utils import draw_multi_box
+        from utils.utils import draw_multi_box
         # 设置画框颜色
         hsv_tuples = [(x / len(self.class_names), 1., 1.) for x in range(len(self.class_names))]
         colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
@@ -128,10 +127,10 @@ if __name__ == '__main__':
     import cv2
     import  matplotlib.pyplot as plt
     # detect = Detect(is_letterbox_image=True)
-    # detect = Detect(class_names_path=opt.class_names_path, anchors_path=opt.anchors_path)
-    detect = Detect(weights_path='./weights/yolov4-tiny.pth', 
-                    # class_names_path='./cfg/coco.txt', 
-                    class_names_path='./cfg/swucar.txt', 
+    # detect = Detect(class_names_path=cfg.class_names_path, anchors_path=cfg.anchors_path)
+    detect = Detect(weights_path='./weights/yolov4-tiny.pt', 
+                    class_names_path='./cfg/coco.txt', 
+                    # class_names_path='./cfg/swucar.txt', 
                     anchors_path='./cfg/anchors.txt',
                     # is_letterbox_image=True
     )

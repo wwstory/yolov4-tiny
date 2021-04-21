@@ -15,6 +15,7 @@ def get_anchors(anchors_path='./cfg/anchors.txt'):
         return np.array(list(map(int, f.readline().split(',')))).reshape(-1, 3, 2)
     
 
+# TODO
 class DecodeBox(nn.Module):
     def __init__(self, anchors, num_classes, img_size):
         super().__init__()
@@ -37,7 +38,7 @@ class DecodeBox(nn.Module):
         #   输入为416x416时
         #   stride_h = stride_w = 32、16、(8)
         #-----------------------------------------------#
-        stride_h = self.img_size[1] / input_height      # TODO: (w, h)
+        stride_h = self.img_size[1] / input_height
         stride_w = self.img_size[0] / input_width
         #-------------------------------------------------#
         #   此时获得的scaled_anchors大小是相对于特征层的    (anchor框占一个单元格的比例)
@@ -177,6 +178,7 @@ def letterbox_image(img, size):
     new_img[(h-nh)//2 : nh+(h-nh)//2, (w-nw)//2 : nw+(w-nw)//2, :] = img
     return new_img
 
+# TODO
 def non_max_suppression(prediction, num_classes, conf_thres=0.5, nms_thres=0.4):
     #----------------------------------------------------------#
     #   将预测结果的格式转换成左上角右下角的格式。
@@ -264,6 +266,7 @@ def non_max_suppression(prediction, num_classes, conf_thres=0.5, nms_thres=0.4):
 
     return output
 
+# TODO
 def letter_correct_boxes(left, top, right, bottom, input_shape, image_shape):
     new_shape = image_shape*np.min(input_shape/image_shape)
 
@@ -287,77 +290,58 @@ def letter_correct_boxes(left, top, right, bottom, input_shape, image_shape):
     boxes *= np.concatenate([image_shape[::-1], image_shape[::-1]],axis=-1)
     return boxes
 
-def get_box_from_out(out, image_shape=np.array([416, 416]), model_image_size = (416, 416, 3), confidence=0.5, iou=0.3, class_names_path='./cfg/coco.txt', anchors_path='./cfg/anchors.txt', is_letterbox_image=False):
-    class_names = get_class_names(class_names_path)
-    anchors = get_anchors(anchors_path)
-    anchors_mask = [[3,4,5], [1,2,3]]   # 13x13检测的目标更大，对应的anchor更大。26x26反之。
-    yolo_decodes = []
-    for i in range(2):
-        yolo_decodes.append(
-            DecodeBox(
-                anchors.reshape(-1,2)[anchors_mask[i]], 
-                len(class_names), 
-                (model_image_size[1], model_image_size[0])
-            )
-        )
-    # 解码anchor
-    out_list = []
-    for i in range(2):
-        out_list.append(yolo_decodes[i](out[i]))
+def draw_one_box(img, box, color=(44, 44, 255), label=None, line_thickness=None, format='x1y1x2y2', resize_box=False):
+    assert format in ('x1y1x2y2', 'cxcywh'), '不存在此格式'
 
-    # 堆叠预测框，nms
-    out = torch.cat(out_list, 1)
-    batch_detections = non_max_suppression(out, 
-                                            len(class_names),
-                                            conf_thres=confidence,
-                                            nms_thres=iou
-    )
-    batch_boxes = []
-    for detections in batch_detections:
-        # 去除letterbox_image添加灰边造成的box偏移
-        try:
-            boxes = detections.cpu().numpy()
-            x1, y1, x2, y2 = np.expand_dims(boxes[:,0],-1), np.expand_dims(boxes[:,1],-1), np.expand_dims(boxes[:,2],-1), np.expand_dims(boxes[:,3],-1) # xmin, ymin, xmax, ymax
-            class_conf, classes = np.expand_dims(boxes[:,5], -1), np.expand_dims(boxes[:,6], -1)
-            if is_letterbox_image:
-                boxes = letter_correct_boxes(x1, y1, x2, y2, np.array([model_image_size[0], model_image_size[1]]), image_shape)
-            else:
-                x1 = x1 / model_image_size[1] # * image_shape[1]
-                y1 = y1 / model_image_size[0] # * image_shape[0]
-                x2 = x2 / model_image_size[1] # * image_shape[1]
-                y2 = y2 / model_image_size[0] # * image_shape[0]
-                # boxes = np.concatenate([x1, y1, x2, y2], axis=-1)
-                # (x1, y1, x2, y2) -> (cx, cy, w, h)
-                cx = x1 + (x2-x1)/2
-                cy = y1 + (y2-y1)/2
-                w = x2 - x1
-                h = y2 - y1
-                boxes = np.concatenate([cx, cy, w, h], axis=-1)
-            boxes = np.concatenate([boxes, class_conf, classes], axis=-1)
-        except:
-            boxes = np.array([])
-        batch_boxes.append(boxes)
-    return batch_boxes
+    if format == 'cxcywh':
+        box[0] -= box[2] / 2
+        box[1] -= box[3] / 2
+        box[2] += box[0]
+        box[3] += box[1]
+    if resize_box:
+        h, w, _ = img.shape
+        box[0] *= w
+        box[1] *= h
+        box[2] *= w
+        box[3] *= h
 
-def draw_one_box(img, b, color=None, label=None, line_thickness=None):
-    # Plots one bounding box on image img
-    tl = line_thickness or round(0.002 * (img.shape[0] + img.shape[1]) / 2) + 1  # line/font thickness
-    color = color or [44, 44, 255]
-    c1, c2 = (int(b[0]), int(b[1])), (int(b[2]), int(b[3]))
-    cv2.rectangle(img, c1, c2, color, thickness=tl, lineType=cv2.LINE_AA)
+    box = list(map(int, box))
+    c1, c2 = (box[0], box[1]), (box[2], box[3])
+    lt = line_thickness or round(0.002 * (img.shape[0] + img.shape[1]) / 2) + 1 # line thickness
+    cv2.rectangle(img, c1, c2, color, thickness=lt, lineType=cv2.LINE_AA)
     if label:
-        tf = max(tl - 1, 1)  # font thickness
-        t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
+        ft = max(lt - 1, 1)  # font thickness
+        t_size = cv2.getTextSize(label, 0, fontScale=lt / 3, thickness=ft)[0]
         c2 = c1[0] + t_size[0], c1[1] - t_size[1] - 3
         cv2.rectangle(img, c1, c2, color, -1, cv2.LINE_AA)  # filled
-        cv2.putText(img, label, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
+        cv2.putText(img, label, (c1[0], c1[1] - 2), 0, lt / 3, [225, 255, 255], thickness=ft, lineType=cv2.LINE_AA)
     return img
 
-def draw_multi_box(img, boxes, class_names=None, colors=None, line_thickness=None):
+def draw_multi_box(img, boxes, class_names=None, colors=None, line_thickness=None, format='x1y1x2y2', resize_box=False):
+    '''
+        boxes:
+            [[x1, y1, x2, y2, classes], ...]
+        type:
+            'x1y1x2y2' | 'cxcywh'
+    '''
     for box in boxes:
         idx = int(box[-1])
         b = box[:4]
-        draw_one_box(img, b, color=colors[idx] if colors else [44, 44, 255], label=class_names[idx] if class_names else '', line_thickness=line_thickness)
+        color = (44, 44, 255)
+        if colors:
+            if idx >= len(colors):  # 只接收一个颜色也可以
+                color = colors[0]
+            else:
+                color = colors[idx]
+        draw_one_box(
+            img, 
+            b, 
+            color = color, 
+            label = class_names[idx] if class_names else None, 
+            line_thickness = line_thickness,
+            format = format,
+            resize_box = resize_box,
+        )
     return img
 
 def convert_cxcywh_to_x1y1x2y2(boxes, img_shape=None, is_predict=True):
@@ -398,6 +382,13 @@ def boxes_classes_filter(boxes, need_list=None, filter_list=None, class_names_pa
     if need_list is None and filter_list is None:
         return boxes
     if need_list:
-        return filter(lambda x: map_classes[int(x[index_classes])] in need_list, boxes)
+        return np.array(list(filter(lambda x: map_classes[int(x[index_classes])] in need_list, boxes)))
     elif filter_list:
-        return filter(lambda x: map_classes[int(x[index_classes])] not in filter_list, boxes)
+        return np.array(list(filter(lambda x: map_classes[int(x[index_classes])] not in filter_list, boxes)))
+
+def get_colors(num, s=1., v=1.):
+    import colorsys
+    hsv_tuples = [(1. - x / num, s, v) for x in range(num)]
+    colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
+    colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
+    return colors

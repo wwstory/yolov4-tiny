@@ -1,27 +1,27 @@
 import warnings
 
-class Config(object):
+class Config:
 
     # dataset path
-    # train_datasets_images_path = '/home/data/datasets/coco2017/coco/images/train2017' # coco
-    # train_datasets_labels_path = '/home/data/datasets/coco2017/coco/labels/train2017'
-    # valid_datasets_images_path = '/home/data/datasets/coco2017/coco/images/val2017'
-    # valid_datasets_labels_path = '/home/data/datasets/coco2017/coco/labels/val2017'
-    # class_names_path = './cfg/coco.txt'
+    train_datasets_images_path = '/home/data/datasets/coco2017/coco/images/train2017' # coco
+    train_datasets_labels_path = '/home/data/datasets/coco2017/coco/labels/train2017'
+    valid_datasets_images_path = '/home/data/datasets/coco2017/coco/images/val2017'
+    valid_datasets_labels_path = '/home/data/datasets/coco2017/coco/labels/val2017'
+    class_names_path = './cfg/coco.txt'
     # train_datasets_images_path = '/home/data/datasets/bdd100k/images/train' # bdd100k
     # train_datasets_labels_path = '/home/data/datasets/bdd100k/labels/train'
     # valid_datasets_images_path = '/home/data/datasets/bdd100k/images/val'
     # valid_datasets_labels_path = '/home/data/datasets/bdd100k/labels/val'
     # class_names_path = './cfg/bdd100k.txt'
-    train_datasets_images_path = '/home/data/datasets/swucar/images/train' # bdd100k
-    train_datasets_labels_path = '/home/data/datasets/swucar/labels/train'
-    valid_datasets_images_path = '/home/data/datasets/swucar/images/val'
-    valid_datasets_labels_path = '/home/data/datasets/swucar/labels/val'
-    class_names_path = './cfg/swucar.txt'
+    # train_datasets_images_path = '/home/data/datasets/swucar/images/train' # swucar
+    # train_datasets_labels_path = '/home/data/datasets/swucar/labels/train'
+    # valid_datasets_images_path = '/home/data/datasets/swucar/images/val'
+    # valid_datasets_labels_path = '/home/data/datasets/swucar/labels/val'
+    # class_names_path = './cfg/swucar.txt'
 
     # pretrain
     save_folder = 'weights/'
-    pretrain_model = save_folder + 'yolov4-tiny.pth'
+    pretrain_model = save_folder + 'yolov4-tiny.pt'
     
     # net
     input_shape = (416, 416)
@@ -57,7 +57,7 @@ class Config(object):
         """
         for k, v in kwargs.items():
             if not hasattr(self, k):
-                warnings.warn("Waning: opt has no attribute %s" % k)
+                warnings.warn("Waning: cfg has no attribute %s" % k)
             setattr(self, k, v)
 
         print('User config:')
@@ -66,4 +66,4 @@ class Config(object):
                 print(k, getattr(self, k))
 
 
-opt = Config()
+cfg = Config()

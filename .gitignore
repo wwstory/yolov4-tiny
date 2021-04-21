@@ -1,5 +1,8 @@
 **/__pycache__/
 **/.vscode/
 **/log/
+out/
+runs/
 
+*.pt
 *.pth

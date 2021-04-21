@@ -25,7 +25,7 @@ coco
 │   └── val2017/
 └── images/
        ├── train2017/
-    │   └── 0001.jpg
+       │   └── 0001.jpg
        └── val2017/
 ```
 
@@ -37,7 +37,7 @@ coco
 
 ## add weights
 
-下载预训练模型`yolov4-tiny.pth`，放在`./weights/`目录下。（否则，将会重头训练）
+下载预训练模型并修改名称为`yolov4-tiny.pt`，放在`./weights/`目录下。（否则，将会重新训练）
 
 ## start train
 
@@ -52,7 +52,7 @@ python3 train.py
 修改`detect.py`中的配置为想要识别的数据集类别：
 
 ```python
-detect = Detect(weights_path='./weights/yolov4-tiny.pth', 
+detect = Detect(weights_path='./weights/yolov4-tiny.pt', 
                 class_names_path='./cfg/coco.txt', 
                 # is_letterbox_image=True
 )

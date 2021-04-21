@@ -2,6 +2,7 @@ import torch
 from torch import nn
 import numpy as np
 
+# TODO
 class YoloLoss(nn.Module):
     def __init__(self, anchors, num_classes, img_size, label_smooth=0, cuda=True, normalize=True):
         super().__init__()
@@ -318,12 +319,14 @@ class YoloLoss(nn.Module):
                 noobj_mask[i][anch_ious_max>self.ignore_threshold] = 0
         return noobj_mask, pred_boxes
 
+# TODO
 def BCELoss(pred,target):
     epsilon = 1e-7
     pred = clip_by_tensor(pred, epsilon, 1.0 - epsilon)
     output = -target * torch.log(pred) - (1.0 - target) * torch.log(1.0 - pred)
     return output
 
+# TODO
 def jaccard(_box_a, _box_b):
     b1_x1, b1_x2 = _box_a[:, 0] - _box_a[:, 2] / 2, _box_a[:, 0] + _box_a[:, 2] / 2
     b1_y1, b1_y2 = _box_a[:, 1] - _box_a[:, 3] / 2, _box_a[:, 1] + _box_a[:, 3] / 2
@@ -354,6 +357,7 @@ def jaccard(_box_a, _box_b):
 def smooth_labels(y_true, label_smoothing,num_classes):
     return y_true * (1.0 - label_smoothing) + label_smoothing / num_classes
 
+# TODO
 def box_ciou(b1, b2):
     """
     输入为：
@@ -404,6 +408,7 @@ def box_ciou(b1, b2):
     ciou = ciou - alpha * v
     return ciou
 
+# TODO
 def clip_by_tensor(t,t_min,t_max):
     t=t.float()
     result = (t >= t_min).float() * t + (t < t_min).float() * t_min
